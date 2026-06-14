@@ -1,0 +1,16 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IPYNB checkpoints
+.ipynb_checkpoints/
+
+# Training artifacts and models
+results/
+sentiment_model/
+*.log
+
+# OS metadata
+.DS_Store
+Thumbs.db
