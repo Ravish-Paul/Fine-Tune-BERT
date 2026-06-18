@@ -1,5 +1,6 @@
 # Fine-Tune BERT for Sentiment Analysis 🚀
 
+
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1RQ7E0qyUvu5MRjH4Mlfqbq2htfzH6o1_?usp=sharing)
 [![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97-Hugging%20Face-orange)](https://huggingface.co/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=flat&logo=pytorch&logoColor=white)](https://pytorch.org/)
@@ -177,6 +178,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Google Colab for providing free GPU runtimes.
 
 ---
-
-Created with ❤️ by **Ravish**
 
