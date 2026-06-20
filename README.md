@@ -171,13 +171,3 @@ After fine-tuning, the model outputs predictions structured as follows:
 | "Terrible customer support" | **Negative 😞** | `0.9885` |
 
 ---
-
-## 📜 License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🤝 Acknowledgements
-- [Hugging Face Transformers Documentation](https://huggingface.co/docs/transformers/index)
-- Google Colab for providing free GPU runtimes.
-
----
-
