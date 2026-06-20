@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 from datasets import load_dataset
+from sklearn.model_selection import train_test_split
 from transformers import (
     AutoTokenizer,
     AutoModelForSequenceClassification,
@@ -10,7 +11,7 @@ from transformers import (
 )
 
 def generate_dummy_data():
-    """Generates a dummy sentiment dataset and saves it as sentiment_data.csv."""
+    """Generates a dummy sentiment dataset and saves it as sample_data.csv."""
     print("Generating dummy sentiment dataset...")
     data = {
         "text": [
@@ -76,12 +77,12 @@ def generate_dummy_data():
         ]
     }
     df = pd.DataFrame(data)
-    df.to_csv("sentiment_data.csv", index=False)
-    print("Dataset saved to sentiment_data.csv")
+    df.to_csv("sample_data.csv", index=False)
+    print("Dataset saved to sample_data.csv")
 
 def main():
     # 1. Generate or check dataset
-    csv_file = "sentiment_data.csv"
+    csv_file = "sample_data.csv"
     if not os.path.exists(csv_file):
         generate_dummy_data()
         
@@ -90,9 +91,15 @@ def main():
     dataset = load_dataset("csv", data_files=csv_file)
     print("Dataset structure:")
     print(dataset)
-    print(f"Sample data: {dataset['train'][0]}")
 
-    # 3. Load model and tokenizer
+    # 3. Train-test split
+    print("Splitting dataset...")
+    dataset = dataset["train"].train_test_split(test_size=0.2, seed=42)
+    print(dataset)
+    print("Final training dataset structure:")
+    print(dataset["train"])
+
+    # 4. Load model and tokenizer
     model_name = "bert-base-uncased"
     print(f"Loading pretrained model and tokenizer: {model_name}...")
     tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -101,47 +108,44 @@ def main():
         num_labels=2
     )
 
-    # 4. Tokenization
+    # 5. Tokenization
     print("Tokenizing dataset...")
-    def tokenize_function(examples):
+    def tokenise(example):
         return tokenizer(
-            examples["text"],
+            example["text"],
+            padding="max_length",
             truncation=True,
-            padding="max_length"
         )
     
-    tokenized_datasets = dataset.map(tokenize_function, batched=True)
+    tokenized_data = dataset.map(tokenise)
 
-    # 5. Training Configuration
+    # 6. Training Configuration
     print("Setting up Trainer...")
     training_args = TrainingArguments(
         output_dir="./results",
-        num_train_epochs=3,
-        per_device_train_batch_size=8,
-        logging_steps=5,
-        save_strategy="no",  # Don't save checkpoints during this quick run
-        report_to="none"     # Disable logging to W&B / TensorBoard
+        num_train_epochs=10,
+        per_device_train_batch_size=8
     )
 
     trainer = Trainer(
         model=model,
         args=training_args,
-        train_dataset=tokenized_datasets["train"]
+        train_dataset=tokenized_data["train"]
     )
 
-    # 6. Fine-Tuning
+    # 7. Fine-Tuning
     print("Starting training...")
     trainer.train()
     print("Training completed.")
 
-    # 7. Save model and tokenizer
+    # 8. Save model and tokenizer
     model_dir = "sentiment_model"
     print(f"Saving fine-tuned model to {model_dir}...")
     model.save_pretrained(model_dir)
     tokenizer.save_pretrained(model_dir)
     print("Model saved successfully.")
 
-    # 8. Testing Inference
+    # 9. Testing Inference
     print("\nRunning inference tests on the saved model...")
     classifier = pipeline(
         "text-classification",
@@ -157,11 +161,11 @@ def main():
         print(f"Confidence: {round(result['score'], 4)}")
         print("-" * 40)
 
-    # Run predictions
-    predict("I absolutely love this product")
-    predict("This is the best phone I have ever used")
-    predict("I hate this movie")
-    predict("Terrible customer support")
+    # Run predictions from Colab notebook
+    predict("This product is fantastic")
+    predict("I hate this product")
+    predict("Amazing quality")
+    predict("Worst purchase ever")
 
 if __name__ == "__main__":
     main()

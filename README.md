@@ -1,7 +1,6 @@
 # Fine-Tune BERT for Sentiment Analysis 🚀
 
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1RQ7E0qyUvu5MRjH4Mlfqbq2htfzH6o1_?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1nw3hlwQ74t-FHzRPlnUmjhkB97SY2fL-?usp=sharing)
 [![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97-Hugging%20Face-orange)](https://huggingface.co/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=flat&logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -13,7 +12,7 @@ A complete, end-to-end pipeline to fine-tune a pre-trained **BERT (Bidirectional
 ## 📌 Project Overview
 
 This repository demonstrates how to perform transfer learning on `bert-base-uncased` using a custom dataset of customer reviews. The project includes:
-1. **Dataset Generation:** Creating a custom synthetic dataset (`sentiment_data.csv`) featuring diverse positive and negative feedback.
+1. **Dataset Generation:** Creating a custom synthetic dataset (`sample_data.csv`) featuring diverse positive and negative feedback.
 2. **Preprocessing:** Tokenizing and mapping text data into input IDs and attention masks with dynamic padding and truncation.
 3. **Fine-Tuning:** Leveraging Hugging Face's `Trainer` and `TrainingArguments` to fine-tune the BERT model.
 4. **Model Saving:** Saving the fine-tuned model weights and tokenizer configuration.
@@ -27,7 +26,7 @@ The diagram below illustrates the training and inference cycle of this project:
 
 ```mermaid
 graph TD
-    A[sentiment_data.csv] --> B(Hugging Face Dataset)
+    A[sample_data.csv] --> B(Hugging Face Dataset)
     B --> C(AutoTokenizer: bert-base-uncased)
     C --> D(Tokenized Dataset)
     D --> E(Hugging Face Trainer)
@@ -64,7 +63,7 @@ pip install transformers datasets torch accelerate peft trl pandas
 ├── README.md              # Project documentation and guide
 ├── fine_tune_bert.ipynb   # Interactive Google Colab Notebook
 ├── fine_tune.py           # Standalone Python training script
-└── sentiment_data.csv     # Custom sentiment dataset (positive/negative)
+└── sample_data.csv        # Custom sentiment dataset (positive/negative)
 ```
 
 ---
@@ -75,7 +74,7 @@ The dataset contains short textual reviews labeled with binary sentiment targets
 - `1`: Positive sentiment 😊
 - `0`: Negative sentiment 😞
 
-Example entries from [sentiment_data.csv](file:///e:/Fine-Tune-BERT/sentiment_data.csv):
+Example entries from [sample_data.csv](file:///e:/Fine-Tune-BERT/sample_data.csv):
 | Text | Label |
 | :--- | :---: |
 | `I love this movie` | `1` |
@@ -90,7 +89,7 @@ Example entries from [sentiment_data.csv](file:///e:/Fine-Tune-BERT/sentiment_da
 ### Option A: Run on Google Colab (Recommended)
 Simply click the badge below to run the interactive notebook directly in your browser:
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1RQ7E0qyUvu5MRjH4Mlfqbq2htfzH6o1_?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1nw3hlwQ74t-FHzRPlnUmjhkB97SY2fL-?usp=sharing)
 
 ### Option B: Run Locally via Command Line
 Execute the training script to generate the dataset, train the model, save it, and run sample inference:
@@ -102,23 +101,26 @@ python fine_tune.py
 
 ## 📝 Code Walkthrough
 
-### 1. Load and Tokenize Dataset
-We convert raw texts into model-readable token IDs:
+### 1. Load, Split and Tokenize Dataset
+We load the dataset, perform a train-test split, and convert raw texts into model-readable token IDs:
 ```python
-from transformers import AutoTokenizer
 from datasets import load_dataset
+from sklearn.model_selection import train_test_split
+from transformers import AutoTokenizer
 
-dataset = load_dataset("csv", data_files="sentiment_data.csv")
+dataset = load_dataset("csv", data_files="sample_data.csv")
+dataset = dataset["train"].train_test_split(test_size=0.2, seed=42)
+
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 
-def tokenize(example):
-    return tokenizer(example["text"], truncation=True, padding="max_length")
+def tokenise(example):
+    return tokenizer(example["text"], padding="max_length", truncation=True)
 
-tokenized_dataset = dataset.map(tokenize)
+tokenized_data = dataset.map(tokenise)
 ```
 
 ### 2. Fine-Tuning with Trainer
-Initialize the model and set training parameters:
+Initialize the model and set training parameters (10 epochs):
 ```python
 from transformers import AutoModelForSequenceClassification, TrainingArguments, Trainer
 
@@ -126,14 +128,14 @@ model = AutoModelForSequenceClassification.from_pretrained("bert-base-uncased", 
 
 training_args = TrainingArguments(
     output_dir="./results",
-    num_train_epochs=3,
+    num_train_epochs=10,
     per_device_train_batch_size=8
 )
 
 trainer = Trainer(
     model=model,
     args=training_args,
-    train_dataset=tokenized_dataset["train"]
+    train_dataset=tokenized_data["train"]
 )
 
 trainer.train()
@@ -150,7 +152,7 @@ from transformers import pipeline
 classifier = pipeline("text-classification", model="sentiment_model", tokenizer="sentiment_model")
 
 # Get prediction
-result = classifier("I absolutely love this product")[0]
+result = classifier("This product is fantastic")[0]
 sentiment = "Positive 😊" if result["label"] == "LABEL_1" else "Negative 😞"
 print(f"Sentiment: {sentiment} (Confidence: {result['score']:.4f})")
 ```
